@@ -506,11 +506,25 @@ namespace SuperMacro.Backend
             }
             else if (command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_RUN)
             {
+
                 try
                 {
-                    if (File.Exists(upperExtendedData))
+                    upperExtendedData = upperExtendedData.ToLower();
+                    upperExtendedData = upperExtendedData.Trim();
+                    int pos = upperExtendedData.IndexOf(".exe", StringComparison.InvariantCultureIgnoreCase);
+                    if (pos == -1)
+                        return;
+                    string exePath = upperExtendedData.Substring(0, pos + 4);
+                    string args = "";
+                    if (!upperExtendedData.EndsWith(".exe"))
+                        args = upperExtendedData.Substring(pos + 5, upperExtendedData.Length - (pos + 5));
+
+                    if (File.Exists(exePath))
                     {
-                        Process.Start(upperExtendedData);
+                        if (args != "")
+                            Process.Start(exePath, args);
+                        else
+                            Process.Start(exePath.ToLower());
                     }
                     return;
                 }
@@ -522,17 +536,9 @@ namespace SuperMacro.Backend
             }
             else if (command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_SET_PROFILE)
             {
-                //MessageBox.Show("EXTENDED_MACRO_VARIABLE_SET_PROFILE");
-                //MessageBox.Show(connection.DeviceInfo().Type.ToString());
                 try
                 {
-                    //MessageBox.Show("BEFORE onnection.SwitchProfileAsync(upperExtendedData); - " + upperExtendedData);
-
-                   // StreamDeckConnection = new StreamDeckConnection();
                     connection.SwitchProfileAsync(upperExtendedData).Wait();
-                    //connection.SwitchProfileAsync();
-                    //        MessageBox.Show("deviceid - " + connection.DeviceId);
-                    //    MessageBox.Show("AFTER onnection.SwitchProfileAsync(upperExtendedData); - " + upperExtendedData);
                     return;
                 }
                 catch (Exception arg2)
