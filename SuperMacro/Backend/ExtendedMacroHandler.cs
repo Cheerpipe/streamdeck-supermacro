@@ -1,7 +1,8 @@
-﻿using BarRaider.SdTools;
+using BarRaider.SdTools;
 using SuperMacro.Actions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -57,10 +58,12 @@ namespace SuperMacro.Backend
             EXTENDED_MACRO_VARIABLE_SET_FROM_CLIPBOARD = 26,
             EXTENDED_MACRO_VARIABLE_OUTPUT_TO_FILE = 27,
             EXTENDED_MACRO_FUNCTIONS = 28,
-            EXTENDED_MACRO_STREAMDECK_SETKEYTITLE = 29
+            EXTENDED_MACRO_STREAMDECK_SETKEYTITLE = 29,
+            EXTENDED_MACRO_VARIABLE_RUN = 30,
+            EXTENDED_MACRO_VARIABLE_SET_PROFILE = 31
         }
 
-        private static readonly string[] EXTENDED_COMMANDS_LIST = { "PAUSE", "KEYDOWN", "KEYUP", "MOUSEMOVE", "MOUSEPOS", "MOUSEXY", "MSCROLLUP", "MSCROLLDOWN", "MSCROLLLEFT", "MSCROLLRIGHT", "MLEFTDOWN", "MLEFTUP", "MRIGHTDOWN", "MRIGHTUP", "MMIDDLEDOWN", "MMIDDLEUP", "MLEFTDBLCLICK", "MRIGHTDBLCLICK", "MSAVEPOS", "MLOADPOS", "INPUT", "OUTPUT", "VARUNSETALL", "VARUNSET", "VARSET", "VARSETFROMFILE", "VARSETFROMCLIPBOARD", "OUTPUTTOFILE", "FUNC", "SETKEYTITLE" };
+        private static readonly string[] EXTENDED_COMMANDS_LIST = { "PAUSE", "KEYDOWN", "KEYUP", "MOUSEMOVE", "MOUSEPOS", "MOUSEXY", "MSCROLLUP", "MSCROLLDOWN", "MSCROLLLEFT", "MSCROLLRIGHT", "MLEFTDOWN", "MLEFTUP", "MRIGHTDOWN", "MRIGHTUP", "MMIDDLEDOWN", "MMIDDLEUP", "MLEFTDBLCLICK", "MRIGHTDBLCLICK", "MSAVEPOS", "MLOADPOS", "INPUT", "OUTPUT", "VARUNSETALL", "VARUNSET", "VARSET", "VARSETFROMFILE", "VARSETFROMCLIPBOARD", "OUTPUTTOFILE", "FUNC", "SETKEYTITLE", "RUN" };
         private const string MOUSE_STORED_X_VARIABLE = "MOUSE_X";
         private const string MOUSE_STORED_Y_VARIABLE = "MOUSE_Y";
         private const char SUPERMACRO_EXTENDED_COMMAND_DELIMITER = ':';
@@ -166,7 +169,8 @@ namespace SuperMacro.Backend
                 else if (command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_INPUT || command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_OUTPUT ||
                          command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_UNSETALL || command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_UNSET ||
                          command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_SET || command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_SET_FROM_FILE ||
-                         command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_SET_FROM_CLIPBOARD || command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_OUTPUT_TO_FILE)
+                         command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_SET_FROM_CLIPBOARD || command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_OUTPUT_TO_FILE ||
+                         command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_RUN)
                 {
                     HandleVariableCommand(command, iis, macro, settings);
                 }
@@ -500,6 +504,23 @@ namespace SuperMacro.Backend
                     Logger.Instance.LogMessage(TracingLevel.WARN, $"OutputToFile exception: {macro.ExtendedData} {ex}");
                 }
                 return;
+            }
+            else if (command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_RUN)
+            {
+                try
+                {
+                    Logger.Instance.LogMessage(TracingLevel.INFO, "CHEERPIPE: RUN");
+                    if (File.Exists(upperExtendedData))
+                    {
+                        Process.Start(upperExtendedData);
+                    }
+                    return;
+                }
+                catch (Exception arg2)
+                {
+                    Logger.Instance.LogMessage(TracingLevel.WARN, string.Format("Run exception: {0} {1}", macro.ExtendedData, arg2));
+                    return;
+                }
             }
             else
             {
