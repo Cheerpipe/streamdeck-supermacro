@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using WindowsInput;
 using WindowsInput.Native;
 
@@ -106,7 +107,7 @@ namespace SuperMacro.Actions
             {
                 Logger.Instance.LogMessage(TracingLevel.ERROR, $"RunCommand Exception: {ex}");
             }
-}
+        }
 
         protected string ValidateKeystroke(string keystroke)
         {
@@ -176,7 +177,7 @@ namespace SuperMacro.Actions
                 forceOneRound = false;
                 if (settings.ForcedKeydown)
                 {
-                    foreach(var keystroke in keyStrokes)
+                    foreach (var keystroke in keyStrokes)
                     {
                         iis.Keyboard.KeyDown(keystroke);
                     }
@@ -206,7 +207,8 @@ namespace SuperMacro.Actions
             while (keyPressed || forceOneRound)
             {
                 forceOneRound = false;
-                ExtendedMacroHandler.HandleExtendedMacro(iis, keyCode, CreateWriterSettings(), null);
+                ExtendedMacroHandler.HandleExtendedMacro(iis, keyCode, CreateWriterSettings(), null, Connection);
+                MessageBox.Show(" private void SimulateExtendedMacro(VirtualKeyCodeContainer keyCode)");
                 Thread.Sleep(delay);
                 HandleAutoStop();
             }
@@ -233,7 +235,7 @@ namespace SuperMacro.Actions
                 {
                     keyPressed = false;
                 }
-            }   
+            }
         }
 
         private WriterSettings CreateWriterSettings()

@@ -19,7 +19,7 @@ namespace SuperMacro.Actions
 
         protected MacroSettingsBase settings;
         protected string primaryMacro;
-        private SuperMacroWriter textWriter = new SuperMacroWriter();
+        private SuperMacroWriter textWriter;
 
         protected bool InputRunning
         {
@@ -59,7 +59,10 @@ namespace SuperMacro.Actions
 
         #endregion
 
-        public SuperMacroBase(SDConnection connection, InitialPayload payload) : base(connection, payload) { }
+        public SuperMacroBase(SDConnection connection, InitialPayload payload) : base(connection, payload)
+        {
+            textWriter = new SuperMacroWriter(connection);
+        }
 
         #region PluginBase Methods
 
@@ -70,7 +73,7 @@ namespace SuperMacro.Actions
         public override void ReceivedGlobalSettings(ReceivedGlobalSettingsPayload payload) { }
 
         #endregion
-       
+
 
         protected virtual Task SaveSettings()
         {

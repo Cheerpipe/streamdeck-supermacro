@@ -17,11 +17,14 @@ namespace SuperMacro.Backend
         private const string COMMENT_MACRO = "{{//}}";
 
         public bool InputRunning { get; set; }
-        public bool ForceStop { get; set;}
+        public bool ForceStop { get; set; }
 
         public bool StickyEnabled { get; set; }
-
-
+        private SDConnection _connection = null;
+        public SuperMacroWriter(SDConnection connection)
+        {
+            _connection = connection;
+        }
         public async void SendInput(string inputText, WriterSettings settings, SetKeyTitle setKeyTitleFunction, bool areMacrosSupported = true)
         {
             if (String.IsNullOrEmpty(inputText))
@@ -200,7 +203,7 @@ namespace SuperMacro.Backend
                     if (keyCode.IsExtended)
                     {
                         Logger.Instance.LogMessage(TracingLevel.INFO, $"{this.GetType()} HandleExtendedMacro");
-                        ExtendedMacroHandler.HandleExtendedMacro(iis, keyCode, settings, setKeyTitleFunction);
+                        ExtendedMacroHandler.HandleExtendedMacro(iis, keyCode, settings, setKeyTitleFunction, _connection);
                     }
                     else // Normal single keycode
                     {

@@ -1,4 +1,5 @@
 using BarRaider.SdTools;
+using streamdeck_client_csharp;
 using SuperMacro.Actions;
 using System;
 using System.Collections.Generic;
@@ -6,8 +7,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -63,7 +62,7 @@ namespace SuperMacro.Backend
             EXTENDED_MACRO_VARIABLE_SET_PROFILE = 31
         }
 
-        private static readonly string[] EXTENDED_COMMANDS_LIST = { "PAUSE", "KEYDOWN", "KEYUP", "MOUSEMOVE", "MOUSEPOS", "MOUSEXY", "MSCROLLUP", "MSCROLLDOWN", "MSCROLLLEFT", "MSCROLLRIGHT", "MLEFTDOWN", "MLEFTUP", "MRIGHTDOWN", "MRIGHTUP", "MMIDDLEDOWN", "MMIDDLEUP", "MLEFTDBLCLICK", "MRIGHTDBLCLICK", "MSAVEPOS", "MLOADPOS", "INPUT", "OUTPUT", "VARUNSETALL", "VARUNSET", "VARSET", "VARSETFROMFILE", "VARSETFROMCLIPBOARD", "OUTPUTTOFILE", "FUNC", "SETKEYTITLE", "RUN" };
+        private static readonly string[] EXTENDED_COMMANDS_LIST = { "PAUSE", "KEYDOWN", "KEYUP", "MOUSEMOVE", "MOUSEPOS", "MOUSEXY", "MSCROLLUP", "MSCROLLDOWN", "MSCROLLLEFT", "MSCROLLRIGHT", "MLEFTDOWN", "MLEFTUP", "MRIGHTDOWN", "MRIGHTUP", "MMIDDLEDOWN", "MMIDDLEUP", "MLEFTDBLCLICK", "MRIGHTDBLCLICK", "MSAVEPOS", "MLOADPOS", "INPUT", "OUTPUT", "VARUNSETALL", "VARUNSET", "VARSET", "VARSETFROMFILE", "VARSETFROMCLIPBOARD", "OUTPUTTOFILE", "FUNC", "SETKEYTITLE", "RUN", "SETPROFILE" };
         private const string MOUSE_STORED_X_VARIABLE = "MOUSE_X";
         private const string MOUSE_STORED_Y_VARIABLE = "MOUSE_Y";
         private const char SUPERMACRO_EXTENDED_COMMAND_DELIMITER = ':';
@@ -92,7 +91,7 @@ namespace SuperMacro.Backend
                         // Handle delimiter
                         if (extendedData.StartsWith(SUPERMACRO_EXTENDED_COMMAND_DELIMITER.ToString()))
                         {
-                            extendedData = extendedData.Substring(SUPERMACRO_EXTENDED_COMMAND_DELIMITER.ToString().Length) ;
+                            extendedData = extendedData.Substring(SUPERMACRO_EXTENDED_COMMAND_DELIMITER.ToString().Length);
                         }
                     }
                     return true;
@@ -132,7 +131,7 @@ namespace SuperMacro.Backend
             return dicVariables[variableName];
         }
 
-        public static void HandleExtendedMacro(InputSimulator iis, VirtualKeyCodeContainer macro, WriterSettings settings, SetKeyTitle SetKeyTitleFunction)
+        public static void HandleExtendedMacro(InputSimulator iis, VirtualKeyCodeContainer macro, WriterSettings settings, SetKeyTitle SetKeyTitleFunction, SDConnection connection)
         {
             try
             {
@@ -170,9 +169,9 @@ namespace SuperMacro.Backend
                          command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_UNSETALL || command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_UNSET ||
                          command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_SET || command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_SET_FROM_FILE ||
                          command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_SET_FROM_CLIPBOARD || command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_OUTPUT_TO_FILE ||
-                         command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_RUN)
+                         command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_RUN || command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_SET_PROFILE)
                 {
-                    HandleVariableCommand(command, iis, macro, settings);
+                    HandleVariableCommand(command, iis, macro, settings, connection);
                 }
                 else if (command == ExtendedCommand.EXTENDED_MACRO_STREAMDECK_SETKEYTITLE)
                 {
@@ -181,7 +180,7 @@ namespace SuperMacro.Backend
                         Logger.Instance.LogMessage(TracingLevel.ERROR, $"SETKEYTITLE called but callback function is null");
                         return;
                     }
-                    string titleString = TryExtractVariable(macro.ExtendedData).Replace(@"\n","\n");
+                    string titleString = TryExtractVariable(macro.ExtendedData).Replace(@"\n", "\n");
                     SetKeyTitleFunction(titleString);
                 }
                 else
@@ -228,7 +227,7 @@ namespace SuperMacro.Backend
         private static void HandleMouseCommand(ExtendedCommand command, InputSimulator iis, VirtualKeyCodeContainer macro)
         {
             // Mouse Move commands
-            if (command == ExtendedCommand.EXTENDED_MACRO_MOUSE_MOVE || command == ExtendedCommand.EXTENDED_MACRO_MOUSE_POS || 
+            if (command == ExtendedCommand.EXTENDED_MACRO_MOUSE_MOVE || command == ExtendedCommand.EXTENDED_MACRO_MOUSE_POS ||
                 command == ExtendedCommand.EXTENDED_MACRO_MOUSE_XY ||
                 command == ExtendedCommand.EXTENDED_MACRO_MOUSE_STORE_LOCATION || command == ExtendedCommand.EXTENDED_MACRO_MOUSE_RESTORE_LOCATION)
             {
@@ -259,7 +258,7 @@ namespace SuperMacro.Backend
 
         private static void HandleMouseMoveCommand(ExtendedCommand command, InputSimulator iis, VirtualKeyCodeContainer macro)
         {
-            if (command == ExtendedCommand.EXTENDED_MACRO_MOUSE_MOVE || command == ExtendedCommand.EXTENDED_MACRO_MOUSE_POS || 
+            if (command == ExtendedCommand.EXTENDED_MACRO_MOUSE_MOVE || command == ExtendedCommand.EXTENDED_MACRO_MOUSE_POS ||
                 command == ExtendedCommand.EXTENDED_MACRO_MOUSE_XY)  // Mouse Move
             {
                 string[] mousePos = macro.ExtendedData.Split(',');
@@ -380,7 +379,7 @@ namespace SuperMacro.Backend
             }
         }
 
-        private static void HandleVariableCommand(ExtendedCommand command, InputSimulator iis, VirtualKeyCodeContainer macro, WriterSettings settings)
+        private static void HandleVariableCommand(ExtendedCommand command, InputSimulator iis, VirtualKeyCodeContainer macro, WriterSettings settings, SDConnection connection)
         {
             string upperExtendedData = macro.ExtendedData.ToUpperInvariant();
 
@@ -406,7 +405,7 @@ namespace SuperMacro.Backend
             {
                 if (dicVariables.ContainsKey(upperExtendedData))
                 {
-                    SuperMacroWriter textWriter = new SuperMacroWriter();
+                    SuperMacroWriter textWriter = new SuperMacroWriter(connection);
                     textWriter.SendInput(dicVariables[upperExtendedData], settings, null, false);
                 }
                 else
@@ -509,16 +508,36 @@ namespace SuperMacro.Backend
             {
                 try
                 {
-                    Logger.Instance.LogMessage(TracingLevel.INFO, "CHEERPIPE: RUN");
                     if (File.Exists(upperExtendedData))
                     {
                         Process.Start(upperExtendedData);
                     }
                     return;
                 }
+                catch (Exception ex)
+                {
+                    Logger.Instance.LogMessage(TracingLevel.WARN, string.Format("Run exception: {0} {1}", macro.ExtendedData, ex));
+                    return;
+                }
+            }
+            else if (command == ExtendedCommand.EXTENDED_MACRO_VARIABLE_SET_PROFILE)
+            {
+                //MessageBox.Show("EXTENDED_MACRO_VARIABLE_SET_PROFILE");
+                //MessageBox.Show(connection.DeviceInfo().Type.ToString());
+                try
+                {
+                    //MessageBox.Show("BEFORE onnection.SwitchProfileAsync(upperExtendedData); - " + upperExtendedData);
+
+                   // StreamDeckConnection = new StreamDeckConnection();
+                    connection.SwitchProfileAsync(upperExtendedData).Wait();
+                    //connection.SwitchProfileAsync();
+                    //        MessageBox.Show("deviceid - " + connection.DeviceId);
+                    //    MessageBox.Show("AFTER onnection.SwitchProfileAsync(upperExtendedData); - " + upperExtendedData);
+                    return;
+                }
                 catch (Exception arg2)
                 {
-                    Logger.Instance.LogMessage(TracingLevel.WARN, string.Format("Run exception: {0} {1}", macro.ExtendedData, arg2));
+                    Logger.Instance.LogMessage(TracingLevel.WARN, string.Format("SetProfile exception: {0} {1}", macro.ExtendedData, arg2));
                     return;
                 }
             }

@@ -106,6 +106,38 @@
       "MinimumVersion": "10"
     }
   ],
+  "Profiles": [
+    {
+      "Name": "SMP1",
+      "ReadOnly": false,
+      "DeviceType": 0,
+      "DontAutoSwitchWhenInstalled": true
+    },
+    {
+      "Name": "SMP2",
+      "ReadOnly": false,
+      "DeviceType": 0,
+      "DontAutoSwitchWhenInstalled": true
+    },
+    {
+      "Name": "SMP3",
+      "ReadOnly": false,
+      "DeviceType": 0,
+      "DontAutoSwitchWhenInstalled": true
+    },
+    {
+      "Name": "SMP4",
+      "ReadOnly": false,
+      "DeviceType": 0,
+      "DontAutoSwitchWhenInstalled": true
+    },
+    {
+      "Name": "SMP5",
+      "ReadOnly": false,
+      "DeviceType": 0,
+      "DontAutoSwitchWhenInstalled": true
+    }
+  ],
   "SDKVersion": 2,
   "Software": {
     "MinimumVersion": "4.7"
